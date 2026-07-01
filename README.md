@@ -1,82 +1,65 @@
-[README.md](https://github.com/user-attachments/files/29536870/README.md)[U# Mini Google Maps — Tìm đường CLI
+## Tên ứng dụng
+**Mini Google Maps — Tìm đường CLI**
+Ứng dụng dòng lệnh mô phỏng bản đồ giao thông thu nhỏ: quản lý mạng lưới địa điểm/tuyến
+đường, tìm đường ngắn nhất theo trọng số, tìm đường ít điểm dừng nhất, kiểm tra khả năng
+kết nối và duyệt các địa điểm có thể tới được — tất cả dựa trên các cấu trúc dữ liệu tự
+cài đặt (không dùng `std::priority_queue`, `std::stack`, `std::queue` có sẵn).
 
-Dự án C++ mô phỏng một "Google Maps mini" chạy trên dòng lệnh, dùng để quản lý mạng
-lưới địa điểm/đường đi và tìm đường bằng các cấu trúc dữ liệu tự cài đặt.
+## Cấu trúc dữ liệu sử dụng
+- **Graph (Adjacency List)**: dùng để lưu mạng lưới đường đi (đỉnh = địa điểm, cạnh =
+  tuyến đường có trọng số) vì danh sách kề tiết kiệm bộ nhớ với đồ thị thưa và cho phép
+  duyệt các cạnh kề của một đỉnh với chi phí O(bậc của đỉnh), phù hợp cho Dijkstra/BFS/DFS.
+- **Min-Heap (Priority Queue tự cài)**: dùng cho thuật toán **Dijkstra** vì tại mỗi bước
+  cần lấy ra đỉnh có khoảng cách tạm thời nhỏ nhất trong O(log n), nhanh hơn nhiều so với
+  duyệt tuyến tính tìm min trên toàn bộ tập đỉnh chưa thăm.
+- **Stack**: dùng để **truy vết và in lại đường đi** vì thuật toán Dijkstra/BFS lưu `parent`
+  của từng đỉnh theo chiều từ đích về nguồn, nên cần đảo ngược thứ tự — đặc tính LIFO của
+  stack giải quyết việc đảo chiều này một cách tự nhiên. Stack cũng được dùng để duyệt
+  **DFS** (tìm tất cả địa điểm có thể đến được từ 1 điểm).
+- **Queue**: dùng cho **BFS** (tìm đường ít điểm dừng nhất) vì đặc tính FIFO của queue đảm
+  bảo các đỉnh được duyệt theo đúng thứ tự lớp (level-order), nhờ đó đường đi tìm được luôn
+  là đường có ít cạnh nhất. Queue cũng được dùng để **kiểm tra tính liên thông** của bản đồ.
 
-## Cấu trúc dự án
-
-| File            | Nội dung |
-|-----------------|----------|
-| `Graph.h`       | Khai báo lớp `Graph` (Adjacency List) và 3 cấu trúc dữ liệu tự cài đặt: `MyStack<T>`, `MyQueue<T>`, `MinHeap<T>` |
-| `Graph.cpp`     | Cài đặt toàn bộ hàm của `Graph`: load bản đồ, hiển thị, Dijkstra, BFS, DFS, kiểm tra liên thông, thêm/xóa |
-| `main.cpp`      | Chương trình CLI dạng menu, gọi các chức năng của `Graph` |
-| `test_graph.cpp`| 5 test case: `test_them_du_lieu`, `test_tim_kiem`, `test_xoa_du_lieu`, `test_edge_cases`, `test_hieu_nang` (n=1000) |
-| `banddo.txt`    | File bản đồ mẫu (danh sách cạnh + trọng số) để thử chức năng 1 |
-
-## Ánh xạ cấu trúc dữ liệu ⇄ chức năng
-
-| Cấu trúc dữ liệu             | Vai trò |
-|-------------------------------|---------|
-| `Graph` (Adjacency List)      | Lưu mạng lưới đường đi (đỉnh = địa điểm, cạnh = tuyến đường có trọng số) |
-| `MinHeap<T>` (Min-Heap tự cài)| Priority Queue cho thuật toán **Dijkstra** (tìm đường ngắn nhất theo trọng số) |
-| `MyStack<T>`                  | Truy vết và in lại đường đi (dùng trong cả Dijkstra và BFS); DFS duyệt bằng stack |
-| `MyQueue<T>`                  | **BFS** tìm đường ít điểm dừng nhất; kiểm tra liên thông |
-
-Lưu ý: Min-Heap, Stack, Queue đều được **tự cài đặt thủ công** (không dùng
-`std::priority_queue`, `std::stack`, `std::queue` có sẵn của STL) để thể hiện đúng
-tinh thần "cấu trúc dữ liệu" của đề tài.
-
-## Biên dịch
-
+## Compile và chạy
 ```bash
-# Chương trình chính (menu CLI)
-g++ -std=c++17 -O2 Graph.cpp main.cpp -o mini_maps
-./mini_maps
-
-# Bộ test (5 test case)
-g++ -std=c++17 -O2 Graph.cpp test_graph.cpp -o test_graph
-./test_graph
+g++ -std=c++17 src/main.cpp src/Graph.cpp -o app && ./app
 ```
 
-> Lưu ý: `main.cpp` và `test_graph.cpp` **đều có hàm `main()` riêng** nên phải biên
-> dịch thành 2 chương trình khác nhau (không được compile chung trong 1 lệnh `g++`).
-
-## Định dạng file bản đồ (.txt)
-
-Mỗi dòng: `TenDiemA TenDiemB TrongSo`
-
-```
-HaNoi HaiPhong 120
-HaNoi NamDinh 90
-NamDinh NinhBinh 40
+Biên dịch bộ test (file test hoàn toàn độc lập, không cần các file trong `src/`):
+```bash
+g++ -std=c++17 test_graph_standalone.cpp -o test_app && ./test_app
 ```
 
-- Dòng bắt đầu bằng `#` hoặc dòng trống sẽ bị bỏ qua (comment).
-- Đồ thị mặc định là **vô hướng** (đường đi 2 chiều) — cạnh A-B tự động tạo cả B-A.
-- Tên địa điểm không được chứa khoảng trắng (dùng `HaNoi`, `NewYork`, ... thay vì có dấu cách).
+## Chức năng
+1. Tải bản đồ từ file `.txt` (danh sách cạnh + trọng số)
+2. Hiển thị bản đồ dạng danh sách kề hoặc dạng liệt kê tuyến đường (ASCII)
+3. Tìm đường ngắn nhất giữa 2 điểm theo tổng trọng số (Dijkstra)
+4. Tìm đường qua ít điểm dừng nhất, không tính trọng số (BFS)
+5. Thêm / xóa địa điểm hoặc tuyến đường
+6. Tìm tất cả địa điểm có thể đến được từ 1 điểm xuất phát (DFS)
+7. Kiểm tra bản đồ có bị ngắt kết nối hay không
 
-## 7 chức năng của chương trình
+## Test cases
+1. **test_them_du_lieu** — thêm địa điểm và tuyến đường mới, kiểm tra số lượng đỉnh/cạnh
+   trong đồ thị được cập nhật đúng.
+2. **test_tim_kiem** — dựng đồ thị có một đường "ngắn nhưng nặng trọng số" và một đường
+   "dài hơn nhưng nhẹ trọng số", kiểm tra Dijkstra chọn đúng đường tổng trọng số nhỏ nhất
+   còn BFS chọn đúng đường có ít cạnh nhất — chứng minh 2 thuật toán cho kết quả khác nhau.
+3. **test_xoa_du_lieu** — xóa một tuyến đường và một địa điểm, kiểm tra đồ thị cập nhật
+   đúng (đường đi bị mất khi cắt kết nối, đỉnh không còn tồn tại sau khi xóa).
+4. **test_edge_cases** — các trường hợp biên: đồ thị rỗng, tìm đường giữa 2 điểm không tồn
+   tại, tải file bản đồ không tồn tại, thêm cạnh trùng lặp (Dijkstra phải chọn cạnh nhẹ
+   nhất trong các cạnh trùng), thêm đỉnh trùng tên nhiều lần, điểm đầu trùng điểm cuối.
+5. **test_hieu_nang** — dựng đồ thị với **n = 1000** đỉnh (dạng chuỗi kết hợp một số cạnh
+   tắt ngẫu nhiên), đo thời gian chạy Dijkstra, BFS, DFS và kiểm tra liên thông bằng
+   `<chrono>` để đánh giá hiệu năng với dữ liệu lớn.
 
-1. **Tải bản đồ từ file .txt** — đọc danh sách cạnh + trọng số, dựng đồ thị.
-2. **Hiển thị bản đồ** — dạng danh sách kề, hoặc dạng liệt kê tuyến đường kiểu "ASCII".
-3. **Tìm đường ngắn nhất (Dijkstra)** — theo tổng trọng số nhỏ nhất, dùng Min-Heap.
-4. **Tìm đường ít điểm dừng nhất (BFS)** — theo số cạnh (chặng) ít nhất, bỏ qua trọng số.
-5. **Thêm/Xóa** — thêm địa điểm, thêm tuyến đường, xóa tuyến đường, xóa địa điểm (kèm xóa các
-   tuyến đường liên quan).
-6. **DFS** — liệt kê tất cả địa điểm có thể đến được từ 1 điểm xuất phát.
-7. **Kiểm tra liên thông** — báo bản đồ có bị chia cắt (có địa điểm không thể đến được) hay không.
-
-## Về 5 test case
-
-- `test_them_du_lieu()` — thêm địa điểm/tuyến đường, kiểm tra số lượng đỉnh/cạnh.
-- `test_tim_kiem()` — so sánh kết quả Dijkstra (theo trọng số) và BFS (theo số chặng) trên
-  cùng một đồ thị có đường đi "ngắn nhưng nặng" và "dài nhưng nhẹ".
-- `test_xoa_du_lieu()` — xóa cạnh, xóa đỉnh, kiểm tra đồ thị cập nhật đúng và đường đi bị mất
-  khi cắt kết nối.
-- `test_edge_cases()` — đồ thị rỗng, tìm đường giữa 2 đỉnh không tồn tại, tải file không tồn
-  tại, cạnh trùng lặp (Dijkstra phải chọn cạnh nhẹ nhất), đỉnh trùng tên, điểm đầu = điểm cuối.
-- `test_hieu_nang()` — dựng đồ thị 1000 đỉnh (dạng chuỗi + một số cạnh tắt ngẫu nhiên), đo thời
-  gian chạy Dijkstra/BFS/DFS/kiểm tra liên thông bằng `<chrono>`.
-
-Toàn bộ 5 test case đã được biên dịch và chạy thử — **PASS 100%**.
-ploading README.md…]()
+## Cấu trúc file
+```
+src/
+  main.cpp       — Menu và điều khiển (giao diện CLI, gọi các hàm của Graph)
+  Graph.h        — Khai báo struct/class + nguyên mẫu hàm (Graph, MinHeap, MyStack, MyQueue)
+  Graph.cpp      — Cài đặt chi tiết (Dijkstra, BFS, DFS, load file, thêm/xóa, kiểm tra liên thông)
+test_graph_standalone.cpp  — File test độc lập, tự chứa toàn bộ cấu trúc dữ liệu bên trong
+banddo.txt                 — File bản đồ mẫu để thử chức năng tải bản đồ
+```
