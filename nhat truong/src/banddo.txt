@@ -1,0 +1,16 @@
+# File ban do mau cho Mini Google Maps
+# Dinh dang moi dong: DiemA DiemB TrongSo
+# TrongSo co the la khoang cach (km) hoac thoi gian di chuyen (phut)
+# Dong bat dau bang # la comment, se bi bo qua
+
+HaNoi HaiPhong 120
+HaNoi NamDinh 90
+HaNoi ThaiNguyen 80
+NamDinh NinhBinh 40
+NinhBinh ThanhHoa 70
+HaiPhong QuangNinh 60
+ThaiNguyen BacKan 65
+HaNoi BacNinh 35
+BacNinh HaiPhong 100
+ThanhHoa NgheAn 140
+NgheAn HaTinh 55
